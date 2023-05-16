@@ -26,6 +26,7 @@ import (
 )
 
 // NewApp creates an app with sane defaults.
+// 封装了版本、EnableBashCompletion、Usage、Copyright版权、Before
 func NewApp(usage string) *cli.App {
 	git, _ := version.VCS()
 	app := cli.NewApp()

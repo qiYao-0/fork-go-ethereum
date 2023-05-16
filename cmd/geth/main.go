@@ -188,11 +188,16 @@ var (
 	}
 )
 
+// app是cli的实例化，cli被封装到flags中，flags.NewApp()返回一个 *cli.App, 封装了初始化的一些配置
 var app = flags.NewApp("the go-ethereum command line interface")
 
+// 初始化cli，开始执行项目geth
+// golang init函数在调用包时会自动执行
 func init() {
 	// Initialize the CLI app and start Geth
+	//cli的入口函数
 	app.Action = geth
+	//版权
 	app.Copyright = "Copyright 2013-2023 The go-ethereum Authors"
 	app.Commands = []*cli.Command{
 		// See chaincmd.go:
@@ -227,7 +232,7 @@ func init() {
 		verkleCommand,
 	}
 	sort.Sort(cli.CommandsByName(app.Commands))
-
+	//在上方有定义
 	app.Flags = flags.Merge(
 		nodeFlags,
 		rpcFlags,
@@ -247,7 +252,10 @@ func init() {
 	}
 }
 
+// 主函数入口
+// cli：一个golang命令行工具
 func main() {
+	//开始运行cli，读系统输入的参数
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -317,16 +325,29 @@ func prepare(ctx *cli.Context) {
 // geth is the main entry point into the system if no special subcommand is run.
 // It creates a default node based on the command line arguments and runs it in
 // blocking mode, waiting for it to be shut down.
+// 系统入口
 func geth(ctx *cli.Context) error {
+
+	//输出无法识别的command
 	if args := ctx.Args().Slice(); len(args) > 0 {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}
 
+	// 翻译：操作内存缓存余量并设置度量系统。这个函数应该在启动devp2p堆栈之前调用
 	prepare(ctx)
+	// 翻译：加载geth配置并创建以太坊后端。
+	// node和ethapi是两个包
+	// stack(堆栈)：*node.Node 一个p2p node
+	// backend(后端)：ethapi.Backend  以太坊的后端，里边包含该eth对象（全或轻）
 	stack, backend := makeFullNode(ctx)
+
 	defer stack.Close()
 
+	// 翻译：startNode启动系统节点和所有注册的协议，然后解锁所有请求的帐户，并启动RPC/IPC接口和挖矿器。
+	//
 	startNode(ctx, stack, backend, false)
+
+	//等待node的结束信号，否则阻塞。正常情况下，程序会阻塞到这里不退出。
 	stack.Wait()
 	return nil
 }
@@ -334,6 +355,7 @@ func geth(ctx *cli.Context) error {
 // startNode boots up the system node and all registered protocols, after which
 // it unlocks any requested accounts, and starts the RPC/IPC interfaces and the
 // miner.
+// 运行节点
 func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend, isConsole bool) {
 	debug.Memsize.Add("node", stack)
 

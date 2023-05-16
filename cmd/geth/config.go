@@ -144,12 +144,18 @@ func loadBaseConfig(ctx *cli.Context) gethConfig {
 
 // makeConfigNode loads geth configuration and creates a blank node instance.
 func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
+	//根据给定的命令行参数和配置文件加载gethConfig
 	cfg := loadBaseConfig(ctx)
+
+	// 创建一个新的P2P节点，准备进行协议注册。
 	stack, err := node.New(&cfg.Node)
+
 	if err != nil {
 		utils.Fatalf("Failed to create the protocol stack: %v", err)
 	}
+
 	// Node doesn't by default populate account manager backends
+
 	if err := setAccountManagerBackends(stack.Config(), stack.AccountManager(), stack.KeyStoreDir()); err != nil {
 		utils.Fatalf("Failed to set account manager backends: %v", err)
 	}
@@ -165,11 +171,16 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 
 // makeFullNode loads geth configuration and creates the Ethereum backend.
 func makeFullNode(ctx *cli.Context) (*node.Node, ethapi.Backend) {
+	// 加载配置并创建一个节点实例。
 	stack, cfg := makeConfigNode(ctx)
+
 	if ctx.IsSet(utils.OverrideCancun.Name) {
 		v := ctx.Uint64(utils.OverrideCancun.Name)
 		cfg.Eth.OverrideCancun = &v
 	}
+	// 将一个以太坊客户端添加到堆栈（p2p node）中。第二个返回值是完整节点实例，如果节点作为轻客户机运行，则返回值可能为nil。
+	// backend是一个以太坊对象的后端
+	// eth是一个以太坊全节点对象
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
 
 	// Configure log filter RPC API.
